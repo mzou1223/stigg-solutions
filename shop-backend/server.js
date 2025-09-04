@@ -1,18 +1,13 @@
-// TODO: this is where stigg integration will go 
-import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { Stigg } from '@stigg/node-server-sdk';
+import products from './data/products.js';
+import stiggClient from './stigg/index.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
-const stiggClient = Stigg.initialize({ apiKey: process.env.STIGG_API_KEY });
-if (!process.env.STIGG_API_KEY){
-    console.error('make sure to add your Stigg API key to the dotenv file')
-}
 
 app.get('/', (req,res) => {
     res.json({
@@ -21,8 +16,40 @@ app.get('/', (req,res) => {
     });
 });
 
+app.get('/api/products', (req,res) => {
+    res.json({
+        pets: products,
+        count: products.length,
+        message: 'testing products'
+    })
+})
+
+//route to test the stigg entitlements with hardcoded customer
+app.get('/api/stigg', async (req, res) => {
+    try {
+        const entitlements = await stiggClient.getEntitlements({
+        customerId: 'customer-cb2a66'
+        });    
+        console.log('customer entitlements:', entitlements);
+        const specialProductEntitlement = await stiggClient.getBooleanEntitlement({
+        customerId: 'customer-cb2a66',
+        featureId: 'feature-boolean-feature-special-product-access',
+        });
+        console.log('special access:', specialProductEntitlement);
+        res.json({
+            entitlementsCount: entitlements.length,
+            specialProductEntitlement: specialProductEntitlement,
+            entitlements: entitlements
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 app.listen(PORT, ()=> {
     console.log(`server running on port: ${PORT}`)
 })
 
-export default stiggClient;
