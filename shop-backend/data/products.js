@@ -37,7 +37,7 @@ const searchPets = (search) => {
     })
 }
 
-module.exports = {
+export default {
   products,
   getProductById,
   getSpecialPlanPets,
