@@ -1,33 +1,72 @@
-import React, { useState } from 'react';
-import products from '../data/products';
+import React, { useEffect, useState } from 'react';
+import { Paywall } from '@stigg/react-sdk';
 
 const ProductGrid = () => {
-  const [userPlan, setUserPlan] = useState({
-    hasSpecialAccess: false,
-    cartLimit: 5
-  });
+    const [products, setProducts] = useState([]);
+    const [userPlan, setUserPlan] = useState({});
+    //cart array to track configuration feature
+    const [cart, setCart] = useState([]);
+    //initial metered feature of views count 
+    const [viewCount, setViewCount] = useState(0);
+    //paywall information
+    const [showPaywall, setShowPaywall] = useState(null);
 
-  //cart array to track configuration feature
-  const [cart, setCart] = useState([]);
-  //initial metered feature of views count 
-  const [viewCount, setViewCount] = useState(0);
-  //paywall information
-  const [showPaywall, setShowPaywall] = useState(null);
+    const fetchData = async()=> {
+        try{
+        const allProducts = await fetch('http://localhost:3000/api/products');
+        const productsData = await allProducts.json();
+        setProducts(productsData.pets);
 
-  const handleProductClick = (product) => {
+        //stigg entitlements with hardcoded customer
+        const stiggEntitlements = await fetch('http://localhost:3000/api/stigg');
+        const stiggData = await stiggEntitlements.json();
+        setUserPlan({
+            hasSpecialAccess: stiggData.specialProductEntitlement.hasAccess || false,
+            cartLimit: stiggData.cartItemsConfig.value,
+            viewLimit: stiggData.viewsEntitlements?.usageLimit || 3
+        });
+        }   
+        catch (error){
+            console.error('Error getting data')
+        }
+    };
+    fetchData();
+
+    useEffect(() => {
+        fetchData();
+    }, [])
+
+  const handleProductClick = async (product) => {
     // if user does not have special access, cannot click into special product
     if (product.special && !userPlan.hasSpecialAccess) {
-      setShowPaywall(product);
+      setShowPaywall('view-limit');
       return;
+    };
+
+    //https://docs.stigg.io/guides/quick-start-guides/rendering-paywalls
+    if(viewCount >= userPlan.viewLimit){
+        setShowPaywall(
+            'special-access');
+        return;
     }
 
-    // use state to increment to track views for product
-    setViewCount(prev => prev + 1);
-
-    alert(`+1 View for ${product.name}`);
+    try {
+      await fetch('http://localhost:3000/api/raw-views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ petId: product.id })
+      });
+      if (viewCount <= userPlan.viewLimit){
+        setViewCount(prev => prev + 1);
+        alert(`+1 View for ${product.name}`);
+      }
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
   };
 
   const addToCart = (product, event) => {
+    //prevents a double call 
     event.stopPropagation();
 
     // checking cart limit based on userPlan limit
@@ -52,7 +91,7 @@ const ProductGrid = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
       
-      {/* Header */}
+      {/* header information */}
       <div style={{ 
         background: 'white',
         padding: '20px',
@@ -71,7 +110,7 @@ const ProductGrid = () => {
         </div>
       </div>
 
-      {/* Product Grid */}
+      {/* actual product */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
@@ -142,56 +181,38 @@ const ProductGrid = () => {
       )}
 
       {/* paywall component */}
-      {showPaywall && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            textAlign: 'center',
-            maxWidth: '300px'
-          }}>
-            <h3>Premium Access Required</h3>
-            <p style={{ color: '#666', marginBottom: '20px' }}>
-              "{showPaywall.name}" requires premium access.
-            </p>
-            <div>
-              <button
-                onClick={() => {
-                  setUserPlan({ ...userPlan, hasSpecialAccess: true });
-                  setShowPaywall(null);
-                }}
-              >
-                Upgrade
-              </button>
-              <button onClick={() => setShowPaywall(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showPaywall === 'special-access' && (
+        <Paywall
+            customerId="customer-cfb33b"
+            featureId="feature-boolean-feature-special-product-access"
+            onSubscriptionChange={() => {
+            fetchData();
+            setShowPaywall(null);
+            }}
+            onClose={() => setShowPaywall(null)}
+        />
+        )}
 
-      {/* grant special access as well as clearing cart options*/}
+        {/* paywall for view limit */}
+        {showPaywall === 'view-limit' && (
+        <Paywall
+            customerId="customer-cfb33b"
+            featureId="feature-metered-feature-raw-product-views"
+            onSubscriptionChange={() => {
+            fetchData();
+            setViewCount(0);
+            setShowPaywall(null);
+            }}
+            onClose={() => setShowPaywall(null)}
+        />
+        )}
+
+      {/* clearing cart options*/}
       <div style={{
         background: '#f8f9fa',
         padding: '15px',
         textAlign: 'center'
       }}>
-        <button
-          onClick={() => setUserPlan({ ...userPlan, hasSpecialAccess: !userPlan.hasSpecialAccess })}
-        >
-          {userPlan.hasSpecialAccess ? 'Remove' : 'Grant'} Special Access
-        </button>
         <button onClick={() => setCart([])}>
           Clear Cart
         </button>

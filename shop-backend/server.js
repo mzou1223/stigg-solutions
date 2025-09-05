@@ -30,10 +30,15 @@ app.get('/api/stigg', async (req, res) => {
             customerId: CUSTOMER_ID,
             featureId: 'feature-configuration-feature-number-of-cart-items'
         });
+        const viewsEntitlements = await stiggClient.getMeteredEntitlement({
+            customerId: CUSTOMER_ID,
+            featureId: 'feature-metered-feature-raw-product-views',
+            });
         res.json({
             entitlementsCount: entitlements.length,
             specialProductEntitlement: specialProductEntitlement,
             cartItemsConfig: cartItemsConfig,
+            viewsEntitlements: viewsEntitlements,
             entitlements: entitlements
         });
     } catch (error) {
@@ -80,9 +85,6 @@ app.get('/api/products', async (req, res) => {
             customerId: CUSTOMER_ID,
             featureId: 'feature-configuration-feature-number-of-cart-items'
         });
-        if (cartItemsConfig.hasAccess && cartItemsConfig.value) {
-            filteredProducts = filteredProducts.slice(0, cartItemsConfig.value);
-        }
         res.json({
             pets: filteredProducts,
             specialAccess: specialAccess.hasAccess,

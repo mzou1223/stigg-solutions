@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import products from '../data/products';
+import { Paywall } from '@stigg/react-sdk'; 
 
 const SearchBar = () => {
 
   const [searchUsage, setSearchUsage] = useState({
-    current: 2,
-    limit: 5
+    current: 1,
+    limit: 3
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,46 +109,20 @@ const SearchBar = () => {
         </div>
       )}
 
-      {/* Paywall */}
+      {/* paywall */}
       {showPaywall && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '8px',
-            textAlign: 'center',
-            maxWidth: '300px'
-          }}>
-            <h3>Search Limit Reached</h3>
-            <p>You've used all {searchUsage.limit} searches. Upgrade to get more.</p>
-            <button
-              onClick={() => setShowPaywall(false)}
-              style={{
-                padding: '10px 20px',
-                background: '#ccc',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <Paywall
+        customerId="customer-cfb33b"
+        featureId="feature-metered-feature-usage-product-searches"
+        onSubscriptionChange={() => {
+          setSearchUsage(prev => ({ ...prev, current: 0, limit: 20 })); // Upgrade to higher limit
+          setShowPaywall(false);
+        }}
+        onClose={() => setShowPaywall(false)}
+      />
+    )}
 
-      {/* Reset search limits */}
+      {/* clear search */}
       <div style={{
         textAlign: 'center'
       }}>
