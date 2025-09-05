@@ -37,8 +37,9 @@ const searchPets = (search) => {
     })
 }
 
-export default {
-  products,
+export default products;
+
+export {
   getProductById,
   getSpecialPlanPets,
   getFreePlanPets,
