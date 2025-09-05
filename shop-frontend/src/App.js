@@ -1,23 +1,25 @@
 import logo from './logo.svg';
 import './App.css';
+import ProductGrid from './components/ProductGrid';
+import SearchBar from './components/SearchBar';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+      <header className="app-header">
+        <h1>Stigg Pet Shop </h1>
       </header>
+
+      <main className="app-main">
+
+        <section className="search-section">
+          <SearchBar />
+        </section>
+
+        <section className="products-section">
+          <ProductGrid />
+        </section>
+      </main>
     </div>
   );
 }
