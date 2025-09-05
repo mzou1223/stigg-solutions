@@ -26,9 +26,14 @@ app.get('/api/stigg', async (req, res) => {
         featureId: 'feature-boolean-feature-special-product-access',
         });
         console.log('special access:', specialProductEntitlement);
+        const cartItemsConfig = await stiggClient.getNumericEntitlement({
+            customerId: CUSTOMER_ID,
+            featureId: 'feature-configuration-feature-number-of-cart-items'
+        });
         res.json({
             entitlementsCount: entitlements.length,
             specialProductEntitlement: specialProductEntitlement,
+            cartItemsConfig: cartItemsConfig,
             entitlements: entitlements
         });
     } catch (error) {
@@ -69,11 +74,19 @@ app.get('/api/products', async (req, res) => {
         if (specialAccess.hasAccess){
             filteredProducts = products
         } else {
-            filteredProducts = products.filter(pet => !pet.premium)
+            filteredProducts = products.filter(pet => !pet.special)
+        }
+        const cartItemsConfig = await stiggClient.getNumericEntitlement({
+            customerId: CUSTOMER_ID,
+            featureId: 'feature-configuration-feature-number-of-cart-items'
+        });
+        if (cartItemsConfig.hasAccess && cartItemsConfig.value) {
+            filteredProducts = filteredProducts.slice(0, cartItemsConfig.value);
         }
         res.json({
             pets: filteredProducts,
-            specialAccess: specialAccess.hasAccess
+            specialAccess: specialAccess.hasAccess,
+            maxCartItems: cartItemsConfig.hasAccess
         })
     } catch (error) {
         res.status(500).json({ error: error.message });
