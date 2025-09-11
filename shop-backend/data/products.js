@@ -1,4 +1,4 @@
-//this file is for the hardcoded product information as well as the functions needed to filter products
+//this file is for the hardcoded product information
 
 //hard coded products below
 const products = [
@@ -12,36 +12,4 @@ const products = [
   { id: 8, name: "Maine Coon Kitten", price: 2000, special: true }
 ];
 
-//function to find product by ID
-const getProductById = (id) => {
-  return products.find((product) => 
-    product.id === parseInt(id));
-};
-
-//function to return special products only
-const getSpecialPlanPets = () => {
-  return products.filter((pet) => 
-    pet.special);
-};
-
-//function to return free plan pets only
-const getFreePlanPets = () => {
-  return products.filter((pet) => 
-    !pet.special);
-};
-
-//basic searching function for metered features
-const searchPets = (search) => {
-    return products.filter((pet) => {
-        pet.name.toLowerCase().includes(search.toLowerCase())
-    })
-}
-
 export default products;
-
-export {
-  getProductById,
-  getSpecialPlanPets,
-  getFreePlanPets,
-  searchPets
-}
