@@ -159,7 +159,7 @@ app.post('/api/search', async (req, res) => {
         await stiggClient.reportUsage({
             customerId: CUSTOMER_ID,
             featureId: 'feature-metered-feature-usage-product-searches',
-            value: 10
+            value: 1
         });
 
         // actually filtering for searches 
@@ -183,7 +183,7 @@ app.get('/api/search/test/:query', async (req, res) => {
          await stiggClient.reportUsage({
             customerId: CUSTOMER_ID,
             featureId: 'feature-metered-feature-usage-product-searches',
-            value: 10
+            value: 1
         });
 
         // actually filtering for searches 
