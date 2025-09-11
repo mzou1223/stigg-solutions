@@ -3,9 +3,8 @@ import products from '../data/products';
 import { Paywall } from '@stigg/react-sdk'; 
 
 const SearchBar = () => {
-
   const [searchUsage, setSearchUsage] = useState({
-    current: 1,
+    current: 0,
     limit: 3
   });
 
@@ -13,7 +12,7 @@ const SearchBar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showPaywall, setShowPaywall] = useState(false);
 
-  const handleSearch = (query) => {
+  const handleSearch = async (query) => {
     if (searchUsage.current >= searchUsage.limit) {
       setShowPaywall(true);
       return;
@@ -29,6 +28,16 @@ const SearchBar = () => {
       ...prev,
       current: prev.current + 1
     }));
+
+    try {
+      await fetch('http://localhost:3000/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+    } catch (error) {
+      console.error('Error tracking search:', error);
+    }
   };
 
   const handleSearchSubmit = (e) => {
@@ -46,7 +55,6 @@ const SearchBar = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       
-      {/* Search Header */}
       <div style={{
         background: 'white',
         padding: '20px',
@@ -60,7 +68,6 @@ const SearchBar = () => {
           </div>
         </div>
 
-        {/* search form  */}
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
@@ -70,14 +77,13 @@ const SearchBar = () => {
           />
           <button
             type="submit"
-            disabled={!searchQuery.trim()}
+            disabled={!searchQuery.trim() || searchUsage.current >= searchUsage.limit}
           >
             {searchUsage.current >= searchUsage.limit ? 'Limit Reached' : 'Search'}
           </button>
         </form>
       </div>
 
-      {/* Search Results */}
       {searchResults.length > 0 && (
         <div>
           <h3 style={{ marginTop: 0 }}>
@@ -109,25 +115,25 @@ const SearchBar = () => {
         </div>
       )}
 
-      {/* paywall */}
       {showPaywall && (
       <Paywall
         customerId="customer-cfb33b"
         featureId="feature-metered-feature-usage-product-searches"
         onSubscriptionChange={() => {
-          setSearchUsage(prev => ({ ...prev, current: 0, limit: 20 })); // Upgrade to higher limit
+          setSearchUsage(prev => ({ ...prev, current: 0, limit: 20 }));
           setShowPaywall(false);
         }}
         onClose={() => setShowPaywall(false)}
       />
     )}
 
-      {/* clear search */}
       <div style={{
-        textAlign: 'center'
+        textAlign: 'center',
+        marginTop: '20px'
       }}>
         <button
           onClick={resetSearchLimit}
+          style={{ marginRight: '10px' }}
         >
           Reset Search Limit
         </button>
